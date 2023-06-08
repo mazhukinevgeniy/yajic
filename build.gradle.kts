@@ -16,6 +16,7 @@ dependencies {
     implementation(project(mapOf("path" to ":storage")))
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }
 
 tasks.test {

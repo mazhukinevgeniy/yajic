@@ -12,10 +12,11 @@ object Main {
 
         val classpath = parser.option(ArgType.String, "classpath", "c").required()
         val sourceDir = parser.option(ArgType.String, "sourceDir", "s").required()
+        val jdkDir = parser.option(ArgType.String, "java_home", "j", "path to jdk. JAVA_HOME is used by default")
 
         parser.parse(args)
 
-        val context = CompilationContext(classpath.value, sourceDir.value)
+        val context = CompilationContext(classpath.value, sourceDir.value, jdkDir.value)
 
         // flow is like this
         // environment validates the inputs, provides canonical data about paths etc
