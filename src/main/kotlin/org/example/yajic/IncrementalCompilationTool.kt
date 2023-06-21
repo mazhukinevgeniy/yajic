@@ -8,25 +8,26 @@ class IncrementalCompilationTool {
     fun runTool(
         classpathStr: String, sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?
     ): DetailedToolResults {
+        //TODO environment validates the inputs, provides canonical data about paths etc
         val context = CompilationContext(classpathStr, sourceDirStr, jdkDirStr, outputDirStr)
 
-        val storage = MetadataStorage()
+        val storage = MetadataStorage.openProject(context.outputDir.canonicalPath)
         val analyzer = Analyzer()
 
+        //TODO storage tells what we already know, analyzer decides what to do
         val filesToRebuild = analyzer.getFilesToRebuild(context.listSources(), storage)
-        context.results.compiledFiles = filesToRebuild.map { it.substring(context.sourceDirStr.length + 1) }
+        context.results.compiledFiles = filesToRebuild.map {
+            it.substring(context.sourceDir.canonicalPath.length + 1)
+        }
 
         JavacRunner().execute(filesToRebuild, context)
 
-        // flow is like this
-        // environment validates the inputs, provides canonical data about paths etc
-        // storage tells what we already know
-        // analyzer decides what to do
-        // environment communicates with javac
-        // storage updates metadata, depending on the result
-        // tool provides diagnostics & returns
+        //TODO receive compilation result; storage updates metadata, depending on the result
 
-        //TODO do we handle classpath changes? yes we must, but think about it
+        //assuming that compilation is always successful:
+        storage.update(analyzer.getDataUpdates())
+
+        //TODO tool provides diagnostics & returns
 
         return context.results
     }

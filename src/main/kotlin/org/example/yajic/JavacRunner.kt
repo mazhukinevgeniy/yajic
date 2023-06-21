@@ -24,9 +24,9 @@ class JavacRunner {
         }
 
         command.addAll(sources)
-        println(command.joinToString { " " })
 
         val builder = ProcessBuilder(command)
+        builder.directory(context.sourceDir)
 
         //builder.redirectOutput(File)
         //builder.redirectError()

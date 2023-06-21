@@ -1,0 +1,11 @@
+selectByCanonicalPath:
+SELECT *
+FROM Sources
+WHERE fileName = ?;
+
+drop:
+DELETE FROM Sources WHERE fileName = ?;
+
+insert:
+INSERT INTO Sources(fileName, checkSum, size)
+VALUES (?, ?, ?);

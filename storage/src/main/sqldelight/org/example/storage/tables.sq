@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS Sources (
+    fileName TEXT NOT NULL PRIMARY KEY,
+    checkSum INTEGER NOT NULL,
+    size INTEGER NOT NULL
+);

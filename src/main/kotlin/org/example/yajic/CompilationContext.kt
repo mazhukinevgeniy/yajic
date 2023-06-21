@@ -7,7 +7,7 @@ class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdk
     val results = DetailedToolResults()
 
     private val classpath = ArrayList<File>()
-    private val sourceDir: File
+    val sourceDir: File
     val jdkDir: File
     //TODO would we actually need these? separate Context and ContextValidator
 
@@ -42,6 +42,8 @@ class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdk
     }
 
     fun listSources(): List<String> {
-        return FileUtils.listFiles(sourceDir, arrayOf("java"), true).map { it.canonicalPath }
+        return FileUtils.listFiles(sourceDir, arrayOf("java"), true).map {
+            it.canonicalPath
+        }
     }
 }
