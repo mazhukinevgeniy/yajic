@@ -12,9 +12,9 @@ repositories {
 
 dependencies {
     implementation(project(mapOf("path" to ":analyzer")))
-    implementation(project(mapOf("path" to ":environment")))
     implementation(project(mapOf("path" to ":storage")))
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+    implementation("commons-io:commons-io:2.13.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }

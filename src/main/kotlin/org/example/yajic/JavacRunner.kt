@@ -1,4 +1,4 @@
-package org.example.environment
+package org.example.yajic
 
 import java.io.File
 
@@ -24,9 +24,9 @@ class JavacRunner {
         }
 
         command.addAll(sources)
-        println(command.joinToString { " " })
 
         val builder = ProcessBuilder(command)
+        builder.directory(context.sourceDir)
 
         //builder.redirectOutput(File)
         //builder.redirectError()
