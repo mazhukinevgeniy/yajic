@@ -19,4 +19,20 @@ class IsolatedChangeTest : TestFlowBase() {
             listOf(baseline, afterChange)
         )
     }
+
+    @org.junit.jupiter.api.Test
+    fun testReturnTypeChange() {
+        val baseline = TestStageExpectation(
+            listOf("Main.java", "Library.java"),
+            listOf("before change")
+        )
+        val afterChange = TestStageExpectation(
+            listOf("Main.java", "Library.java"),
+            listOf("2000")
+        )
+        runMultiStep(
+            listOf("src/test/resources/sources/changereturntype/1", "src/test/resources/sources/changereturntype/2"),
+            listOf(baseline, afterChange)
+        )
+    }
 }
