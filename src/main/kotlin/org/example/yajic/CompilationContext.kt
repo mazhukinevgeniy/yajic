@@ -1,9 +1,11 @@
-package org.example.environment
+package org.example.yajic
 
 import org.apache.commons.io.FileUtils
 import java.io.File
 
 class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?) {
+    val results = DetailedToolResults()
+
     private val classpath = ArrayList<File>()
     private val sourceDir: File
     val jdkDir: File

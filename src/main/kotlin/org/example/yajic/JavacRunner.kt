@@ -1,4 +1,4 @@
-package org.example.environment
+package org.example.yajic
 
 import java.io.File
 

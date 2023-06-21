@@ -1,51 +1,75 @@
 package org.example.jictest
 
-import org.example.Main
+import org.apache.commons.io.FileUtils
+import org.example.yajic.IncrementalCompilationTool
 import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.nio.file.Files
-import java.util.Properties
+import java.nio.file.StandardCopyOption
+import java.util.*
+import kotlin.io.path.Path
 
-open class TestFlowBase(sources: List<String>, expectations: List<TestStageExpectation>) {
+open class TestFlowBase() {
 
     private lateinit var outputDir: File
+    private lateinit var sourceDir: File
 
     @org.junit.jupiter.api.BeforeEach
     fun setUp() {
         outputDir = Files.createTempDirectory("yajic_test").toFile()
-        check(outputDir.exists() && outputDir.isDirectory())
-        check(Files.list(outputDir.toPath()).findAny().isEmpty)
+        sourceDir = Files.createTempDirectory("yajic_test_sources").toFile()
     }
 
     @org.junit.jupiter.api.AfterEach
     fun tearDown() {
         outputDir.deleteRecursively()
+        sourceDir.deleteRecursively()
     }
 
-    fun run() {
-        Main.main(arrayOf("-c", "", "-s", "src/test/resources/sources", "-j", JDK_DIR, "-o", outputDir.canonicalPath))
-
-        //TODO check file lists
-
-        //TODO Apache Commons Exec?
+    private fun testCompiledProgram(expectation: TestStageExpectation) {
         val runner = ProcessBuilder(
             JDK_DIR + File.separatorChar + "bin" + File.separatorChar + "java", "Main"
         ).also {
             it.directory(outputDir)
         }
 
-        //TODO clean up everything
-        runner.redirectOutput(ProcessBuilder.Redirect.PIPE)
         val process = runner.start()
         val outputReader = process.inputReader()
+        val errorReader = process.errorReader()
         process.waitFor()
         val output = outputReader.readLines()
-        val errors = process.errorReader().readLines()
+        val errors = errorReader.readLines()
 
-        println(errors.joinToString())
+        Assertions.assertEquals(emptyList<String>(), errors) { "program ran successfully" }
+        Assertions.assertEquals(expectation.programOutput, output) { "output after incremental compilation" }
+    }
 
-        Assertions.assertEquals(output.size, 1) { "output size" }
-        Assertions.assertEquals(output[0], "42") { "output contents" }
+    fun runMultiStep(sources: List<String>, expectations: List<TestStageExpectation>) {
+        require(sources.size == expectations.size)
+        require(sources.isNotEmpty())
+
+        for (i in sources.indices) {
+            //TODO consider case: if a source file is removed, should we remove its output .class file? probably yes
+            sourceDir.deleteRecursively()
+            FileUtils.copyDirectory(File(sources[i]), sourceDir)
+
+            val result = IncrementalCompilationTool().runTool(
+                "",
+                sourceDir.canonicalPath,
+                JDK_DIR,
+                outputDir.canonicalPath
+            )
+
+            //TODO make it set-first
+            Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
+                "set of compiled files"
+            }
+            testCompiledProgram(expectations[i])
+        }
+    }
+
+    fun runSimple(source: String, expectation: TestStageExpectation) {
+        runMultiStep(listOf(source), listOf(expectation))
     }
 
     companion object {
