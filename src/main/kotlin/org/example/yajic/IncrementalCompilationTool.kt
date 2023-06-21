@@ -21,6 +21,8 @@ class IncrementalCompilationTool {
         }
 
         JavacRunner().execute(filesToRebuild, context)
+        //TODO ok, new plan. since analysis is based on the compiled .class files, we must detect diffs, compile them,
+        //then check for cascade changes
 
         //TODO receive compilation result; storage updates metadata, depending on the result
 
