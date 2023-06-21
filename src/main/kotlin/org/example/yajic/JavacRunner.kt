@@ -25,12 +25,15 @@ class JavacRunner {
 
         command.addAll(sources)
 
+        println("running javac as $command")
+
         val builder = ProcessBuilder(command)
         builder.directory(context.sourceDir)
 
-        //builder.redirectOutput(File)
-        //builder.redirectError()
+        val javacProcess = builder.start()
+        val errorReader = javacProcess.errorReader()
 
-        builder.start().waitFor()
+        javacProcess.waitFor()
+        context.results.errors.addAll(errorReader.readLines())
     }
 }
