@@ -2,7 +2,6 @@ package org.example.analyzer
 
 import org.objectweb.asm.*
 import java.io.FileInputStream
-import kotlin.collections.ArrayList
 
 data class ClassSignatures(
     val published: List<String>,

@@ -1,7 +1,7 @@
 package org.example.yajic
 
-import org.example.analyzer.StatefulAnalyzer
 import org.example.analyzer.ClassMetadataExtractor
+import org.example.analyzer.StatefulAnalyzer
 import org.example.storage.MetadataStorage
 import java.io.File
 

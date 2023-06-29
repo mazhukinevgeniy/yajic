@@ -2,7 +2,6 @@ package org.example.analyzer
 
 import org.example.storage.FileComparison
 import org.example.storage.MetadataStorage
-import kotlin.math.sign
 
 //TODO optimize imports in the todo-cleaning stage
 
