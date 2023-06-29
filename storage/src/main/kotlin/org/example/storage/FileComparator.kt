@@ -12,6 +12,8 @@ class FileComparator {
     //1. same / not same
     //2. dig deeper - it's analyzer's domain probably, here we just check if it changed
 
+    //TODO what is it really doing in the storage module
+
     fun makeComparison(file: String, knownChecksum: Long, knownSize: Long): FileComparison {
         val readFile = File(file)
         require(readFile.isFile && readFile.extension == "java")

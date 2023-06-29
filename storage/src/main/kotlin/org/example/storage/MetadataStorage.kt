@@ -11,6 +11,7 @@ class MetadataStorage(private val db: Database) {
 
     private val comparator = FileComparator()
 
+    //TODO should be 'getFileMetadata' with no comparator
     fun getFileComparison(fileName: String): FileComparison {
         val info = db.sourcesQueries.selectByCanonicalPath(fileName).executeAsOneOrNull()
 
@@ -19,14 +20,49 @@ class MetadataStorage(private val db: Database) {
         return comparator.makeComparison(fileName, info?.checkSum ?: 0, info?.size ?: 0)
     }
 
-    fun update(updates: List<FileComparison>) {
+    fun getClassApis(className: String): List<String> {
+        return db.apisQueries.selectByClass(className).executeAsList()
+    }
+
+    fun getDependencies(publicApis: List<String>): Set<String> {
+        val result = HashSet<String>()
+
+        for (api in publicApis) {
+            result.addAll(db.dependenciesQueries.selectByApi(api).executeAsList())
+        }
+
+        return result
+    }
+
+
+    fun updateFileMetadata(updates: List<FileComparison>) {
         for (item in updates) {
             db.sourcesQueries.drop(item.name)
             db.sourcesQueries.insert(item.name, item.checksum, item.currentSize)
         }
     }
 
+    fun updateClassApis(className: String, toDelete: List<String>, toInsert: List<String>) {
+        for (item in toDelete) {
+            db.apisQueries.drop(className, item)
+        }
+        for (item in toInsert) {
+            db.apisQueries.insert(className, item)
+        }
+        //TODO this is inefficient, do multi-row insertions/removals
+    }
+
+    fun updateDependencies(className: String, toDelete: List<String>, toInsert: List<String>) {
+        for (item in toDelete) {
+            db.dependenciesQueries.drop(className, item)
+        }
+        for (item in toInsert) {
+            db.dependenciesQueries.insert(className, item)
+        }
+    }
+
     companion object {
+        //TODO just drop this nonsense? we aren't making the demonized version, it's okay to assume one project per one process
         private val lock = ReentrantReadWriteLock()
 
         private val databases = HashMap<String, Database>()

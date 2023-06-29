@@ -18,6 +18,10 @@ class JavacRunner {
             context.outputDir.canonicalPath
         )
 
+        //for asm
+       ///////// command.addAll(arrayOf("-source", "1.8", "-target", "1.8"))
+        //TODO bootstrapclasspath support
+
         if (context.classpathStr.isNotEmpty()) {
             command.add("-cp")
             command.add(context.classpathStr)
