@@ -52,11 +52,17 @@ class StatefulAnalyzer {
         //TODO can detect if there was a significant change to avoid unnecessary reset+write in db
 
         val newApiSet = signatures.published.toHashSet()
-        for (knownApi in storage.getClassApis(className)) {
+        val knownApis = storage.getClassApis(className)
+        for (knownApi in knownApis) {
             if (knownApi !in newApiSet) {
                 //TODO awkward logic, fix later
                 affectedByChange.addAll(storage.getDependencies(listOf(knownApi)).map { "$it.java" })
             }
+        }
+
+        if (newApiSet.minus(knownApis.toSet()).isNotEmpty()) {
+            // hacky way to detect interface changes
+            affectedByChange.addAll(storage.getDependencies(listOf(className)).map { "$it.java" })
         }
     }
 

@@ -22,6 +22,7 @@ open class TestFlowBase() {
     fun tearDown() {
         outputDir.deleteRecursively()
         sourceDir.deleteRecursively()
+        //TODO doesn't properly remove temporary files on win, why?
     }
 
     private fun testCompiledProgram(expectation: TestStageExpectation) {
