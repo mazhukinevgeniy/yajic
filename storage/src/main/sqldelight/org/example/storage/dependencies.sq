@@ -1,0 +1,11 @@
+selectByApi:
+SELECT userClass
+FROM Dependencies
+WHERE usedApi = ?;
+
+dropClass:
+DELETE FROM Dependencies WHERE userClass = ?;
+
+insert:
+INSERT INTO Dependencies(userClass, usedApi)
+VALUES (?, ?);

@@ -58,6 +58,8 @@ open class TestFlowBase() {
                 outputDir.canonicalPath
             )
 
+            Assertions.assertEquals(result.errors, emptyList<String>())
+
             //TODO make it set-first
             Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
                 "set of compiled files"

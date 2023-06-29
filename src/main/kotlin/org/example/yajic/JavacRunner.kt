@@ -3,10 +3,8 @@ package org.example.yajic
 import java.io.File
 
 class JavacRunner {
-    //TODO processbuilder etc
-
-    fun execute(sources: List<String>, context: CompilationContext) {
-        if (sources.isEmpty()) {
+    fun execute(sources: Iterable<String>, context: CompilationContext) {
+        if (!sources.iterator().hasNext()) {
             println("nothing to build")
             //TODO organize logs
             return
@@ -25,12 +23,15 @@ class JavacRunner {
 
         command.addAll(sources)
 
+        println("running javac as $command")
+
         val builder = ProcessBuilder(command)
         builder.directory(context.sourceDir)
 
-        //builder.redirectOutput(File)
-        //builder.redirectError()
+        val javacProcess = builder.start()
+        val errorReader = javacProcess.errorReader()
 
-        builder.start().waitFor()
+        javacProcess.waitFor()
+        context.results.errors.addAll(errorReader.readLines())
     }
 }

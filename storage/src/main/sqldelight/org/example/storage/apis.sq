@@ -1,0 +1,11 @@
+selectByClass:
+SELECT api
+FROM Apis
+WHERE publisherClass = ?;
+
+dropClass:
+DELETE FROM Apis WHERE publisherClass = ?;
+
+insert:
+INSERT INTO Apis(publisherClass, api)
+VALUES (?, ?);

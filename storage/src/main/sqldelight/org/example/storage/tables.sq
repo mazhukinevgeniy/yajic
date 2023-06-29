@@ -3,3 +3,19 @@ CREATE TABLE IF NOT EXISTS Sources (
     checkSum INTEGER NOT NULL,
     size INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS Dependencies (
+    userClass TEXT NOT NULL,
+    usedApi TEXT NOT NULL,
+    PRIMARY KEY (userClass, usedApi)
+);
+
+CREATE INDEX IF NOT EXISTS dependenciesByApi ON Dependencies(usedApi);
+
+CREATE TABLE IF NOT EXISTS Apis (
+    publisherClass TEXT NOT NULL,
+    api TEXT NOT NULL,
+    PRIMARY KEY (publisherClass, api)
+);
+
+CREATE INDEX IF NOT EXISTS apisByClass ON Apis(publisherClass);
