@@ -47,6 +47,7 @@ open class TestFlowBase() {
         require(sources.isNotEmpty())
 
         for (i in sources.indices) {
+            println("===\nstep $i\n===")
             //TODO consider case: if a source file is removed, should we remove its output .class file? probably yes
             sourceDir.deleteRecursively()
             FileUtils.copyDirectory(File(sources[i]), sourceDir)
@@ -58,13 +59,20 @@ open class TestFlowBase() {
                 outputDir.canonicalPath
             )
 
-            Assertions.assertEquals(result.errors, emptyList<String>())
+            // error messages might be jdk-dependant, so let's just check for presence of errors
+            if (expectations[i].errors.isNotEmpty()) {
+                Assertions.assertNotEquals(0, result.errors.size) { "expected compilation errors" }
+                println("errors: \n" + result.errors.joinToString("\n"))
+            } else {
+                Assertions.assertEquals(emptyList<String>(), result.errors)
+
+                testCompiledProgram(expectations[i])
+            }
 
             //TODO make it set-first
             Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
                 "set of compiled files"
             }
-            testCompiledProgram(expectations[i])
         }
     }
 
