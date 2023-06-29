@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.nio.file.Files
 import java.util.*
-import kotlin.math.exp
 
 open class TestFlowBase() {
 
@@ -86,6 +85,5 @@ open class TestFlowBase() {
             it.load(javaClass.getResourceAsStream("local.properties"))
         }
         val JDK_DIR: String = properties.getProperty("testJdkDir")!!
-        val NO_OUTPUT: List<String>? = null
     }
 }
