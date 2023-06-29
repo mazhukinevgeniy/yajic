@@ -48,6 +48,7 @@ open class TestFlowBase() {
         require(sources.isNotEmpty())
 
         for (i in sources.indices) {
+            println("===\nstep $i\n===")
             //TODO consider case: if a source file is removed, should we remove its output .class file? probably yes
             sourceDir.deleteRecursively()
             FileUtils.copyDirectory(File(sources[i]), sourceDir)
