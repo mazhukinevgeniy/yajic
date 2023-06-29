@@ -3,6 +3,7 @@ package org.example.analyzer
 import org.objectweb.asm.*
 import java.io.FileInputStream
 
+
 data class ClassSignatures(
     val published: List<String>,
     val used: List<String>
@@ -31,6 +32,8 @@ class ClassMetadataExtractor {
         val publishedApi = ArrayList<String>()
         val usedApi = ArrayList<String>()
 
+        val implemented = ArrayList<String>()
+
         //todo minor optimization - don't track self-use
 
         classReader.accept(object : ClassVisitor(Opcodes.ASM9) {
@@ -46,6 +49,13 @@ class ClassMetadataExtractor {
             ) {
                 requireNotNull(name) { "unexpected null class name in classReader for ${classReader.className}" }
                 currentClass = name
+
+                implemented.addAll(interfaces ?: emptyArray())
+                if (access and Opcodes.ACC_INTERFACE != 0) {
+                    // for now reuse Dependency data model for interface-implementor relation
+                    publishedApi.add(name)
+                }
+
                 super.visit(version, access, name, signature, superName, interfaces)
             }
 
@@ -140,6 +150,6 @@ class ClassMetadataExtractor {
                 }
             }
         }, 0)
-        return ClassSignatures(publishedApi, usedApi)
+        return ClassSignatures(publishedApi, usedApi.plus(implemented))
     }
 }
