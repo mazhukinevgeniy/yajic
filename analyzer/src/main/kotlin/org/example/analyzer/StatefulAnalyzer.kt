@@ -2,9 +2,11 @@ package org.example.analyzer
 
 import org.example.storage.FileComparison
 import org.example.storage.MetadataStorage
+import kotlin.math.sign
+
 //TODO optimize imports in the todo-cleaning stage
 
-data class NewMetadata (
+private data class NewMetadata (
     val fileMetadata: ArrayList<FileComparison>,
     val insertApis: HashMap<String, ArrayList<String>>,
     val insertDependencies: HashMap<String, ArrayList<String>>
@@ -39,40 +41,34 @@ class StatefulAnalyzer {
         }
     }
 
-    //TODO ok actually it's crazy inefficient, go the right way
-    fun compareSignatures(className: String, signatures: ClassSignatures, knownApis: List<String>, knownDependencies: List<String>) {
-        //TODO cleanup
-        // all cases
+    fun compareSignatures(className: String, signatures: ClassSignatures, storage: MetadataStorage) {
+        //TODO consider and test all core cases
         // 1. api added
         // 2. api removed
         // 3. api changed (aka removal plus addition)
 
-        //okay, so wait, do we even need signatures
-        //let's just track dependencies for now
-        //it would be messy in inheritance scenarios though
-        //idk idk
-        //TODO just write tests
+        //TODO unnecessary copy
+        newMetadata.insertApis[className] = ArrayList(signatures.published)
+        newMetadata.insertDependencies[className] = ArrayList(signatures.used)
+        //TODO can detect if there was a significant change to avoid unnecessary reset+write in db
 
-        /*
-    val fileMetadata: ArrayList<FileComparison>,
-    val insertApis: HashMap<String, ArrayList<String>>,
-    val deleteApis: HashMap<String, ArrayList<String>>,
-    val insertDependencies: HashMap<String, ArrayList<String>>,
-    val deleteDependencies: HashMap<String, ArrayList<String>>*/
-
-
-
-
-//*val className = rebuilt.substring(0, rebuilt.length - ".java".length)
-//            val classInfo = metadataExtractor.extractSignatures(
-//                "${context.outputDir.canonicalPath}${File.separator}$className.class"
-//            )
-//            val knownApis = storage.getClassApis(className)
-//            val knownDependencies = storage.getDependencies(classInfo.published)*/
+        val newApiSet = signatures.published.toHashSet()
+        for (knownApi in storage.getClassApis(className)) {
+            if (knownApi !in newApiSet) {
+                //TODO awkward logic, fix later
+                affectedByChange.addAll(storage.getDependencies(listOf(knownApi)).map { "$it.java" })
+            }
+        }
     }
 
-    //todo what's data type?
-    fun getDataUpdates(): List<FileComparison> {
-        return newMetadata.fileMetadata
+    fun flushMetadataUpdates(storage: MetadataStorage) {
+        storage.updateFileMetadata(newMetadata.fileMetadata)
+
+        for ((className, updates) in newMetadata.insertApis) {
+            storage.updateClassApis(className, updates)
+        }
+        for ((className, updates) in newMetadata.insertDependencies) {
+            storage.updateDependencies(className, updates)
+        }
     }
 }

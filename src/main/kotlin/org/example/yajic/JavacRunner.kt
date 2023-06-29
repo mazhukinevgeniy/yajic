@@ -3,10 +3,8 @@ package org.example.yajic
 import java.io.File
 
 class JavacRunner {
-    //TODO processbuilder etc
-
-    fun execute(sources: List<String>, context: CompilationContext) {
-        if (sources.isEmpty()) {
+    fun execute(sources: Iterable<String>, context: CompilationContext) {
+        if (!sources.iterator().hasNext()) {
             println("nothing to build")
             //TODO organize logs
             return
@@ -17,10 +15,6 @@ class JavacRunner {
             "-d",
             context.outputDir.canonicalPath
         )
-
-        //for asm
-       ///////// command.addAll(arrayOf("-source", "1.8", "-target", "1.8"))
-        //TODO bootstrapclasspath support
 
         if (context.classpathStr.isNotEmpty()) {
             command.add("-cp")

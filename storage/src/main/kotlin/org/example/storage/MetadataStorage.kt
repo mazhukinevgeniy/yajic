@@ -42,20 +42,16 @@ class MetadataStorage(private val db: Database) {
         }
     }
 
-    fun updateClassApis(className: String, toDelete: List<String>, toInsert: List<String>) {
-        for (item in toDelete) {
-            db.apisQueries.drop(className, item)
-        }
+    fun updateClassApis(className: String, toInsert: List<String>) {
+        db.apisQueries.dropClass(className)
         for (item in toInsert) {
             db.apisQueries.insert(className, item)
         }
         //TODO this is inefficient, do multi-row insertions/removals
     }
 
-    fun updateDependencies(className: String, toDelete: List<String>, toInsert: List<String>) {
-        for (item in toDelete) {
-            db.dependenciesQueries.drop(className, item)
-        }
+    fun updateDependencies(className: String, toInsert: List<String>) {
+        db.dependenciesQueries.dropClass(className)
         for (item in toInsert) {
             db.dependenciesQueries.insert(className, item)
         }

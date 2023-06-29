@@ -9,7 +9,7 @@ data class ClassSignatures(
     val used: List<String>
 )
 
-class MetadataExtractor {
+class ClassMetadataExtractor {
 
     fun extractSignatures(classFile: String): ClassSignatures {
         val reader = ClassReader(FileInputStream(classFile))
