@@ -3,8 +3,8 @@ SELECT userClass
 FROM Dependencies
 WHERE usedApi = ?;
 
-drop:
-DELETE FROM Dependencies WHERE userClass = ? AND usedApi = ?;
+dropClass:
+DELETE FROM Dependencies WHERE userClass = ?;
 
 insert:
 INSERT INTO Dependencies(userClass, usedApi)
