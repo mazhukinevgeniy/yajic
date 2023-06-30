@@ -1,20 +1,24 @@
 package org.example.analyzer
 
 import org.objectweb.asm.*
+import java.io.File
 import java.io.FileInputStream
 
 
 data class ClassSignatures(
-    val published: List<String>,
-    val used: List<String>
+    val published: Set<String>,
+    val used: Set<String>
 )
 
 class ClassMetadataExtractor {
 
-    fun extractSignatures(classFile: String): ClassSignatures {
+    fun extractSignatures(classFile: String, skipInnerClass: Boolean = false): ClassSignatures {
         val reader = ClassReader(FileInputStream(classFile))
 
-        val signatures = getSignatures(reader)
+        // for locating compiled inner classes
+        val directory = classFile.substringBeforeLast(File.separatorChar)
+
+        val signatures = getSignatures(reader, directory, skipInnerClass)
 
         println("\nused: $classFile")
         for (api in signatures.used) {
@@ -28,128 +32,79 @@ class ClassMetadataExtractor {
         return signatures
     }
 
-    private fun getSignatures(classReader: ClassReader): ClassSignatures {
-        val publishedApi = ArrayList<String>()
-        val usedApi = ArrayList<String>()
+    private fun getSignatures(classReader: ClassReader, directory: String, skipInnerClass: Boolean): ClassSignatures {
+        val publishedApi = HashSet<String>()
+        val usedApi = HashSet<String>()
 
-        val implemented = ArrayList<String>()
+        classReader.accept(ExtractingClassVisitor(publishedApi, usedApi, directory, skipInnerClass), 0)
+        return ClassSignatures(publishedApi, usedApi)
+    }
 
-        //todo minor optimization - don't track self-use
+    private inner class ExtractingClassVisitor(
+        val published: MutableSet<String>,
+        val used: MutableSet<String>,
+        val directory: String,
+        val skipInnerClass: Boolean
+    ) : ClassVisitor(Opcodes.ASM9) {
+        private lateinit var currentClass: String
 
-        classReader.accept(object : ClassVisitor(Opcodes.ASM9) {
-            private lateinit var currentClass: String
+        override fun visit(
+            version: Int,
+            access: Int,
+            name: String?,
+            signature: String?,
+            superName: String?,
+            interfaces: Array<out String>?
+        ) {
+            requireNotNull(name)
+            currentClass = name
 
-            override fun visit(
-                version: Int,
-                access: Int,
-                name: String?,
-                signature: String?,
-                superName: String?,
-                interfaces: Array<out String>?
-            ) {
-                requireNotNull(name) { "unexpected null class name in classReader for ${classReader.className}" }
-                currentClass = name
-
-                implemented.addAll(interfaces ?: emptyArray())
-                if (access and Opcodes.ACC_INTERFACE != 0) {
-                    // for now reuse Dependency data model for interface-implementor relation
-                    publishedApi.add(name)
-                }
-
-                super.visit(version, access, name, signature, superName, interfaces)
+            used.addAll(interfaces ?: emptyArray())
+            if (access and Opcodes.ACC_INTERFACE != 0) {
+                // for now reuse Dependency data model for interface-implementor relation
+                published.add(name)
             }
 
-            //TODO clean up overrides
-            override fun visitMethod(
-                access: Int,
-                name: String,
-                desc: String?,
-                signature: String?,
-                exceptions: Array<String?>?
-            ): MethodVisitor? {
-                //TODO: does it work for internal/protected?
-                if ((Opcodes.ACC_PUBLIC and access) > 0) {
-                    publishedApi.add("$currentClass.$name.$desc")
-                }
+            super.visit(version, access, name, signature, superName, interfaces)
+        }
 
-                //TODO fix Extractor api
-                return object : MethodVisitor(Opcodes.ASM9) {
-                    override fun visitInsn(opcode: Int) {
-                        super.visitInsn(opcode)
-                    }
+        override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
+            if (!skipInnerClass) {
+                val innerSignatures = extractSignatures("$directory${File.separator}$name.class", skipInnerClass = true)
 
-                    override fun visitIntInsn(opcode: Int, operand: Int) {
-                        super.visitIntInsn(opcode, operand)
-                    }
+                published.addAll(innerSignatures.published)
+                used.addAll(innerSignatures.used)
 
-                    override fun visitVarInsn(opcode: Int, varIndex: Int) {
-                        super.visitVarInsn(opcode, varIndex)
-                    }
+                //this breaks the domain model a little bit, because "class" is most often used as "source file"
+            }
 
-                    override fun visitTypeInsn(opcode: Int, type: String?) {
-                        super.visitTypeInsn(opcode, type)
-                    }
+            super.visitInnerClass(name, outerName, innerName, access)
+        }
 
-                    override fun visitFieldInsn(opcode: Int, owner: String?, name: String?, descriptor: String?) {
-                        super.visitFieldInsn(opcode, owner, name, descriptor)
-                    }
+        override fun visitMethod(
+            access: Int,
+            name: String,
+            desc: String?,
+            signature: String?,
+            exceptions: Array<String?>?
+        ): MethodVisitor? {
+            if ((Opcodes.ACC_PUBLIC and access) > 0) {
+                published.add("$currentClass.$name.$desc")
+            }
+            println("visited method $currentClass . $name")
 
-                    override fun visitMethodInsn(
-                        opcode: Int,
-                        owner: String?,
-                        name: String?,
-                        descriptor: String?,
-                        isInterface: Boolean
-                    ) {
-                        //TODO when is isInterface useful?
-                        usedApi.add("$owner.$name.$descriptor")
-                        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                    }
-
-                    override fun visitInvokeDynamicInsn(
-                        name: String?,
-                        descriptor: String?,
-                        bootstrapMethodHandle: Handle?,
-                        vararg bootstrapMethodArguments: Any?
-                    ) {
-                        super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, *bootstrapMethodArguments)
-                    }
-
-                    override fun visitJumpInsn(opcode: Int, label: Label?) {
-                        super.visitJumpInsn(opcode, label)
-                    }
-
-                    override fun visitLdcInsn(value: Any?) {
-                        super.visitLdcInsn(value)
-                    }
-
-                    override fun visitIincInsn(varIndex: Int, increment: Int) {
-                        super.visitIincInsn(varIndex, increment)
-                    }
-
-                    override fun visitTableSwitchInsn(min: Int, max: Int, dflt: Label?, vararg labels: Label?) {
-                        super.visitTableSwitchInsn(min, max, dflt, *labels)
-                    }
-
-                    override fun visitLookupSwitchInsn(dflt: Label?, keys: IntArray?, labels: Array<out Label>?) {
-                        super.visitLookupSwitchInsn(dflt, keys, labels)
-                    }
-
-                    override fun visitMultiANewArrayInsn(descriptor: String?, numDimensions: Int) {
-                        super.visitMultiANewArrayInsn(descriptor, numDimensions)
-                    }
-
-                    override fun visitInsnAnnotation(
-                        typeRef: Int,
-                        typePath: TypePath?,
-                        descriptor: String?,
-                        visible: Boolean
-                    ): AnnotationVisitor {
-                        return super.visitInsnAnnotation(typeRef, typePath, descriptor, visible)
-                    }
+            return object : MethodVisitor(Opcodes.ASM9) {
+                override fun visitMethodInsn(
+                    opcode: Int,
+                    owner: String?,
+                    name: String?,
+                    descriptor: String?,
+                    isInterface: Boolean
+                ) {
+                    used.add("$owner.$name.$descriptor")
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
                 }
             }
-        }, 0)
-        return ClassSignatures(publishedApi, usedApi.plus(implemented))
+        }
     }
 }
