@@ -2,17 +2,16 @@ package org.example
 
 import org.example.jictest.TestFlowBase
 import org.example.jictest.TestStageExpectation
-import java.io.File
 
 class AddedMethodsTests : TestFlowBase() {
     @org.junit.jupiter.api.Test
     fun testNoAdditionalBuildingNeeded() {
         val baseline = TestStageExpectation(
-            listOf("Main.java", "Library.java"),
+            setOf("Main.java", "Library.java"),
             listOf("before change")
         )
         val afterChange = TestStageExpectation(
-            listOf("Library.java"),
+            setOf("Library.java"),
             listOf("before change")
         )
         runMultiStep(
@@ -24,16 +23,16 @@ class AddedMethodsTests : TestFlowBase() {
     @org.junit.jupiter.api.Test
     fun enforceCheckOfInheritor() {
         val baseline = TestStageExpectation(
-            listOf("Main.java", "ILibrary.java", "Library.java", "AbstractLibrary.java"),
+            setOf("Main.java", "ILibrary.java", "Library.java", "AbstractLibrary.java"),
             listOf("before change")
         )
         val afterChange = TestStageExpectation(
-            listOf("ILibrary.java", "Library.java", "AbstractLibrary.java"),
+            setOf("ILibrary.java", "Library.java", "AbstractLibrary.java"),
             programOutput = emptyList(),
             errors = listOf("Library is not abstract")
         )
         val afterFix = TestStageExpectation(
-            listOf("Library.java"),
+            setOf("Library.java"),
             programOutput = listOf("done")
         )
         runMultiStep(

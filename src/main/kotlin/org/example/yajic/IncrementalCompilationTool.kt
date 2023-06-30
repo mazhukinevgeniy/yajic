@@ -12,41 +12,49 @@ class IncrementalCompilationTool {
     fun runTool(
         classpathStr: String, sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?
     ): DetailedToolResults {
-        //TODO environment validates the inputs, provides canonical data about paths etc
-        //TODO remove todos
         val context = CompilationContext(classpathStr, sourceDirStr, jdkDirStr, outputDirStr)
 
         val storage = MetadataStorage.openProject(context.outputDir.canonicalPath)
         val analyzer = StatefulAnalyzer()
 
-        //TODO storage tells what we already know, analyzer decides what to do
         val filesToRebuild = analyzer.getFilesToRebuild(context.listSources(), storage)
-        context.results.compiledFiles = filesToRebuild.map {
-            it.substring(context.sourceDir.canonicalPath.length + 1)
-        }.toSet()
 
-        JavacRunner().execute(filesToRebuild, context)
-        //TODO can we really optimize it without parsing the sources?
+        // step 1: compile directly changed files
 
-        //TODO preferably don't use raw strings for file paths
-        analyzeNewClassFiles(context.results.compiledFiles, analyzer, storage, context)
+        val report = JavacRunner().execute(filesToRebuild, context)
+        if (report.errors.isNotEmpty()) {
+            println("build failed\n" + report.errors.joinToString("\n"))
+            return DetailedToolResults(emptySet(), ArrayList(report.errors))
+        }
 
-        val secondStageNoPrefix = analyzer.affectedByChange.minus(context.results.compiledFiles)
+        val results = DetailedToolResults(
+            filesToRebuild.map {
+                it.substring(context.sourceDir.canonicalPath.length + 1)
+            }.toSet(),
+            ArrayList()
+        )
+
+        // step 2: compile dependencies to either ensure that code is consistent, or force compilation error
+
+        analyzeNewClassFiles(results.attemptedToCompile, analyzer, storage, context)
+
+        val secondStageNoPrefix = analyzer.affectedByChange.minus(results.attemptedToCompile)
+        results.attemptedToCompile = results.attemptedToCompile.plus(analyzer.affectedByChange)
+
         val secondStageSources = secondStageNoPrefix.map {
             "${context.sourceDir.canonicalPath}${File.separator}$it"
         }
-        JavacRunner().execute(secondStageSources, context)
+        val secondReport = JavacRunner().execute(secondStageSources, context)
+        if (secondReport.errors.isNotEmpty()) {
+            println("build of dependent classes failed\n" + secondReport.errors.joinToString("\n"))
+            results.errors.addAll(secondReport.errors)
+        } else {
+            analyzeNewClassFiles(secondStageNoPrefix, analyzer, storage, context)
+        }
 
-        context.results.compiledFiles = context.results.compiledFiles.plus(analyzer.affectedByChange)
-        //TODO messy use of state here, write proper code
-        analyzeNewClassFiles(secondStageNoPrefix, analyzer, storage, context)
-
-        //assuming that compilation is always successful:
         analyzer.flushMetadataUpdates(storage)
 
-        //TODO tool provides diagnostics & returns
-
-        return context.results
+        return results
     }
 
     private fun analyzeNewClassFiles(sources: Iterable<String>, analyzer: StatefulAnalyzer, storage: MetadataStorage, context: CompilationContext) {

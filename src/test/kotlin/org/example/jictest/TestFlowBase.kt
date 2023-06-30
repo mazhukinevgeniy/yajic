@@ -61,7 +61,7 @@ open class TestFlowBase() {
             )
 
             //TODO make it set-first
-            Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
+            Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.attemptedToCompile.toSet()) {
                 "set of compiled files"
             }
 

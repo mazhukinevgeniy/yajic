@@ -14,6 +14,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation(project(mapOf("path" to ":storage")))
     implementation("org.ow2.asm:asm:9.5")
+    implementation("commons-io:commons-io:2.13.0")
 }
 
 tasks.test {

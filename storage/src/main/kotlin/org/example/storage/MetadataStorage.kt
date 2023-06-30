@@ -7,17 +7,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+
+data class FileMetadata(
+    val checksum: Long,
+    val size: Long
+)
+
 class MetadataStorage(private val db: Database) {
 
-    private val comparator = FileComparator()
-
-    //TODO should be 'getFileMetadata' with no comparator
-    fun getFileComparison(fileName: String): FileComparison {
-        val info = db.sourcesQueries.selectByCanonicalPath(fileName).executeAsOneOrNull()
-
-        //TODO what if it's unknown? maybe we run differently
-        //current flow is definitely unclean
-        return comparator.makeComparison(fileName, info?.checkSum ?: 0, info?.size ?: 0)
+    fun getFileMetadata(fileName: String): FileMetadata {
+        val stored = db.sourcesQueries.selectByCanonicalPath(fileName).executeAsOneOrNull()
+        return FileMetadata(stored?.checkSum ?: 0, stored?.size ?: 0)
     }
 
     fun getClassApis(className: String): List<String> {
@@ -35,14 +35,14 @@ class MetadataStorage(private val db: Database) {
     }
 
 
-    fun updateFileMetadata(updates: List<FileComparison>) {
-        for (item in updates) {
-            db.sourcesQueries.drop(item.name)
-            db.sourcesQueries.insert(item.name, item.checksum, item.currentSize)
+    fun updateFileMetadata(updates: Map<String, FileMetadata>) {
+        for ((name, data) in updates) {
+            db.sourcesQueries.drop(name)
+            db.sourcesQueries.insert(name, data.checksum, data.size)
         }
     }
 
-    fun updateClassApis(className: String, toInsert: List<String>) {
+    fun updateClassApis(className: String, toInsert: Set<String>) {
         db.apisQueries.dropClass(className)
         for (item in toInsert) {
             db.apisQueries.insert(className, item)
@@ -50,7 +50,7 @@ class MetadataStorage(private val db: Database) {
         //TODO this is inefficient, do multi-row insertions/removals
     }
 
-    fun updateDependencies(className: String, toInsert: List<String>) {
+    fun updateDependencies(className: String, toInsert: Set<String>) {
         db.dependenciesQueries.dropClass(className)
         for (item in toInsert) {
             db.dependenciesQueries.insert(className, item)
@@ -58,7 +58,8 @@ class MetadataStorage(private val db: Database) {
     }
 
     companion object {
-        //TODO just drop this nonsense? we aren't making the demonized version, it's okay to assume one project per one process
+        // if we make a YAJIC daemon, it might be good to cache sql connections
+
         private val lock = ReentrantReadWriteLock()
 
         private val databases = HashMap<String, Database>()

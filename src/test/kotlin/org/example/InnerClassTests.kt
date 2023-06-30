@@ -2,17 +2,16 @@ package org.example
 
 import org.example.jictest.TestFlowBase
 import org.example.jictest.TestStageExpectation
-import java.io.File
 
 class InnerClassTests : TestFlowBase() {
     @org.junit.jupiter.api.Test
     fun testInnerClassDependsOnChanged() {
         val baseline = TestStageExpectation(
-            listOf("Main.java", "Library.java", "ClassOwner.java"),
+            setOf("Main.java", "Library.java", "ClassOwner.java"),
             listOf("before change")
         )
         val afterChange = TestStageExpectation(
-            listOf("Library.java", "ClassOwner.java"),
+            setOf("Library.java", "ClassOwner.java"),
             listOf("1234")
         )
         runMultiStep(
@@ -24,11 +23,11 @@ class InnerClassTests : TestFlowBase() {
     @org.junit.jupiter.api.Test
     fun testDependencyOnChangedInnerClass() {
         val baseline = TestStageExpectation(
-            listOf("Main.java", "Library.java"),
+            setOf("Main.java", "Library.java"),
             listOf("before change")
         )
         val afterChange = TestStageExpectation(
-            listOf("Main.java", "Library.java"),
+            setOf("Main.java", "Library.java"),
             listOf("1234")
         )
         runMultiStep(

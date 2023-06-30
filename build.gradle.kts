@@ -1,6 +1,7 @@
 plugins {
     id("java")
     kotlin("jvm") version "1.8.20"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 group = "org.example"
@@ -25,4 +26,10 @@ tasks.test {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "org.example.Main"
+    }
 }

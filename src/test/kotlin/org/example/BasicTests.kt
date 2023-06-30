@@ -7,15 +7,15 @@ class BasicTests : TestFlowBase() {
 
     @org.junit.jupiter.api.Test
     fun testColdStart() {
-        runSimple("src/test/resources/sources/basictests", TestStageExpectation(listOf("Main.java"), listOf("42")))
+        runSimple("src/test/resources/sources/basic_tests", TestStageExpectation(setOf("Main.java"), listOf("42")))
     }
 
     @org.junit.jupiter.api.Test
     fun testNoChanges() {
-        val expectBuild = TestStageExpectation(listOf("Main.java"), listOf("42"))
-        val expectNoOp = TestStageExpectation(emptyList(), listOf("42"))
+        val expectBuild = TestStageExpectation(setOf("Main.java"), listOf("42"))
+        val expectNoOp = TestStageExpectation(emptySet(), listOf("42"))
         runMultiStep(
-            listOf("src/test/resources/sources/basictests", "src/test/resources/sources/basictests"),
+            listOf("src/test/resources/sources/basic_tests", "src/test/resources/sources/basic_tests"),
             listOf(expectBuild, expectNoOp)
         )
     }
