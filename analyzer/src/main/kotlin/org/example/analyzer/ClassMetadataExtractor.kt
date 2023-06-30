@@ -1,6 +1,7 @@
 package org.example.analyzer
 
 import org.objectweb.asm.*
+import java.io.File
 import java.io.FileInputStream
 
 
@@ -11,10 +12,13 @@ data class ClassSignatures(
 
 class ClassMetadataExtractor {
 
-    fun extractSignatures(classFile: String): ClassSignatures {
+    fun extractSignatures(classFile: String, skipInnerClass: Boolean = false): ClassSignatures {
         val reader = ClassReader(FileInputStream(classFile))
 
-        val signatures = getSignatures(reader)
+        // for locating compiled inner classes
+        val directory = classFile.substringBeforeLast(File.separatorChar)
+
+        val signatures = getSignatures(reader, directory, skipInnerClass)
 
         println("\nused: $classFile")
         for (api in signatures.used) {
@@ -28,19 +32,19 @@ class ClassMetadataExtractor {
         return signatures
     }
 
-    private fun getSignatures(classReader: ClassReader): ClassSignatures {
+    private fun getSignatures(classReader: ClassReader, directory: String, skipInnerClass: Boolean): ClassSignatures {
         val publishedApi = HashSet<String>()
         val usedApi = HashSet<String>()
 
-        classReader.accept(ExtractingClassVisitor(publishedApi, usedApi, classReader, allowInnerClass = true), 0)
+        classReader.accept(ExtractingClassVisitor(publishedApi, usedApi, directory, skipInnerClass), 0)
         return ClassSignatures(publishedApi, usedApi)
     }
 
-    private class ExtractingClassVisitor(
+    private inner class ExtractingClassVisitor(
         val published: MutableSet<String>,
         val used: MutableSet<String>,
-        val reader: ClassReader,
-        val allowInnerClass: Boolean
+        val directory: String,
+        val skipInnerClass: Boolean
     ) : ClassVisitor(Opcodes.ASM9) {
         private lateinit var currentClass: String
 
@@ -65,12 +69,16 @@ class ClassMetadataExtractor {
         }
 
         override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
-            super.visitInnerClass(name, outerName, innerName, access)
+            if (!skipInnerClass) {
+                val innerSignatures = extractSignatures("$directory${File.separator}$name.class", skipInnerClass = true)
 
-            if (allowInnerClass) {
-                reader.accept(ExtractingClassVisitor(published, used, reader, allowInnerClass = false), 0)
-                //TODO suspicious, must test cases with multiple inner classes and other shenanigans
+                published.addAll(innerSignatures.published)
+                used.addAll(innerSignatures.used)
+
+                //this breaks the domain model a little bit, because "class" is most often used as "source file"
             }
+
+            super.visitInnerClass(name, outerName, innerName, access)
         }
 
         override fun visitMethod(
@@ -83,6 +91,7 @@ class ClassMetadataExtractor {
             if ((Opcodes.ACC_PUBLIC and access) > 0) {
                 published.add("$currentClass.$name.$desc")
             }
+            println("visited method $currentClass . $name")
 
             return object : MethodVisitor(Opcodes.ASM9) {
                 override fun visitMethodInsn(
