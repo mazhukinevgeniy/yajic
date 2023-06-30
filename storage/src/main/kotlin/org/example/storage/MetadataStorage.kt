@@ -58,7 +58,8 @@ class MetadataStorage(private val db: Database) {
     }
 
     companion object {
-        //TODO just drop this nonsense? we aren't making the demonized version, it's okay to assume one project per one process
+        // if we make a YAJIC daemon, it might be good to cache sql connections
+
         private val lock = ReentrantReadWriteLock()
 
         private val databases = HashMap<String, Database>()

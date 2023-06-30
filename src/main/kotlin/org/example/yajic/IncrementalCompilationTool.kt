@@ -12,14 +12,11 @@ class IncrementalCompilationTool {
     fun runTool(
         classpathStr: String, sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?
     ): DetailedToolResults {
-        //TODO environment validates the inputs, provides canonical data about paths etc
-        //TODO remove todos
         val context = CompilationContext(classpathStr, sourceDirStr, jdkDirStr, outputDirStr)
 
         val storage = MetadataStorage.openProject(context.outputDir.canonicalPath)
         val analyzer = StatefulAnalyzer()
 
-        //TODO storage tells what we already know, analyzer decides what to do
         val filesToRebuild = analyzer.getFilesToRebuild(context.listSources(), storage)
         context.results.compiledFiles = filesToRebuild.map {
             it.substring(context.sourceDir.canonicalPath.length + 1)
@@ -43,8 +40,6 @@ class IncrementalCompilationTool {
 
         //assuming that compilation is always successful:
         analyzer.flushMetadataUpdates(storage)
-
-        //TODO tool provides diagnostics & returns
 
         return context.results
     }

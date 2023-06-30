@@ -11,15 +11,15 @@ class CollisionsTests : TestFlowBase() {
         val slash = File.separator
 
         val baseline = TestStageExpectation(
-            listOf("Main.java", "org${slash}example${slash}Library.java", "com${slash}example${slash}math${slash}Library.java"),
+            setOf("Main.java", "org${slash}example${slash}Library.java", "com${slash}example${slash}math${slash}Library.java"),
             listOf("before change")
         )
         val afterChange = TestStageExpectation(
-            listOf("org${slash}example${slash}Library.java", "com${slash}example${slash}math${slash}Library.java"),
+            setOf("org${slash}example${slash}Library.java", "com${slash}example${slash}math${slash}Library.java"),
             listOf("2")
         )
         runMultiStep(
-            listOf("src/test/resources/sources/classnamecollision/1", "src/test/resources/sources/classnamecollision/2"),
+            listOf("src/test/resources/sources/class_name_collision/1", "src/test/resources/sources/class_name_collision/2"),
             listOf(baseline, afterChange)
         )
     }

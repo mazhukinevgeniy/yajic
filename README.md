@@ -4,7 +4,9 @@ yet another java incremental compilation tool
 
 ## How to build
 
-//TODO provide useful instruction
+Use gradle. Tested with jbr-17.0.6.
+
+You can create "fat jar" with `shadowJar` for convenience.
 
 ## How to use
 

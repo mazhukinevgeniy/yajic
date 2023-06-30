@@ -3,13 +3,12 @@ package org.example.yajic
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?) {
+class CompilationContext(val classpathStr: String, sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?) {
     val results = DetailedToolResults()
+    //TODO: do we do this?
 
-    private val classpath = ArrayList<File>()
     val sourceDir: File
     val jdkDir: File
-    //TODO would we actually need these? separate Context and ContextValidator
 
     val outputDir: File
 
@@ -20,15 +19,10 @@ class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdk
     }
 
     init {
-        for (dependencyDir in classpathStr.split(File.pathSeparatorChar)) {
-            //classpath.add(checkedDirectory(dependencyDir))
-            //TODO classpath requirements are less strict https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html
-            //actually, we can delegate the validation to javac
-        }
         sourceDir = checkedDirectory(sourceDirStr)
 
         val javaHome = jdkDirStr ?: System.getenv("JAVA_HOME")
-        check (javaHome != null) { "please specify path to JDK in JAVA_HOME environment variable" }
+        check (javaHome != null) { "please set path to JDK as an argument or JAVA_HOME environment variable" }
         jdkDir = checkedDirectory(javaHome)
 
         outputDir = File(outputDirStr ?: "yajic_out")
@@ -37,8 +31,6 @@ class CompilationContext(val classpathStr: String, val sourceDirStr: String, jdk
         } else {
             require(outputDir.isDirectory) { "$outputDirStr is not a readable directory" }
         }
-
-        //TODO check that javac is executable and be done with that
     }
 
     fun listSources(): List<String> {
