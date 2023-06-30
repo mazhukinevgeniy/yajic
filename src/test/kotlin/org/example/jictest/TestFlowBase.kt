@@ -60,6 +60,11 @@ open class TestFlowBase() {
                 outputDir.canonicalPath
             )
 
+            //TODO make it set-first
+            Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
+                "set of compiled files"
+            }
+
             // error messages might be jdk-dependant, so let's just check for presence of errors
             if (expectations[i].errors.isNotEmpty()) {
                 Assertions.assertNotEquals(0, result.errors.size) { "expected compilation errors" }
@@ -68,11 +73,6 @@ open class TestFlowBase() {
                 Assertions.assertEquals(emptyList<String>(), result.errors)
 
                 testCompiledProgram(expectations[i])
-            }
-
-            //TODO make it set-first
-            Assertions.assertEquals(expectations[i].compiledFiles.toSet(), result.compiledFiles.toSet()) {
-                "set of compiled files"
             }
         }
     }
