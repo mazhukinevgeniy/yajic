@@ -4,9 +4,6 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 class CompilationContext(val classpathStr: String, sourceDirStr: String, jdkDirStr: String?, outputDirStr: String?) {
-    val results = DetailedToolResults()
-    //TODO: do we do this?
-
     val sourceDir: File
     val jdkDir: File
 

@@ -2,12 +2,14 @@ package org.example.yajic
 
 import java.io.File
 
+data class JavacReport(
+    val errors: List<String>
+)
+
 class JavacRunner {
-    fun execute(sources: Iterable<String>, context: CompilationContext) {
+    fun execute(sources: Iterable<String>, context: CompilationContext) : JavacReport {
         if (!sources.iterator().hasNext()) {
-            println("nothing to build")
-            //TODO organize logs
-            return
+            return JavacReport(emptyList())
         }
 
         val command = mutableListOf<String>(
@@ -32,6 +34,9 @@ class JavacRunner {
         val errorReader = javacProcess.errorReader()
 
         javacProcess.waitFor()
-        context.results.errors.addAll(errorReader.readLines())
+
+        return JavacReport(
+            errorReader.readLines()
+        )
     }
 }

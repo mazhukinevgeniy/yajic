@@ -1,6 +1,6 @@
 package org.example.yajic
 
-class DetailedToolResults {
-    var compiledFiles: Set<String> = emptySet()
-    var errors = ArrayList<String>()
-}
+class DetailedToolResults(
+    var attemptedToCompile: Set<String>,
+    var errors: ArrayList<String>
+)

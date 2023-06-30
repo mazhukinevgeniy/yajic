@@ -21,18 +21,7 @@ class ClassMetadataExtractor {
         // for locating compiled inner classes
         val directory = classFile.substringBeforeLast(File.separatorChar)
 
-        val signatures = getSignatures(reader, directory, skipInnerClass)
-
-        println("\nused: $classFile")
-        for (api in signatures.used) {
-            println(api)
-        }
-        println("own: $classFile")
-        for (api in signatures.published) {
-            println(api)
-        }
-
-        return signatures
+        return getSignatures(reader, directory, skipInnerClass)
     }
 
     private fun getSignatures(classReader: ClassReader, directory: String, skipInnerClass: Boolean): ClassSignatures {
@@ -94,7 +83,6 @@ class ClassMetadataExtractor {
             if ((Opcodes.ACC_PUBLIC and access) > 0) {
                 published.add("$currentClass.$name.$desc")
             }
-            println("visited method $currentClass . $name")
 
             return object : MethodVisitor(Opcodes.ASM9) {
                 override fun visitMethodInsn(

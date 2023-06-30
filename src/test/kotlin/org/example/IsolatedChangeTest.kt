@@ -53,9 +53,9 @@ class IsolatedChangeTest : TestFlowBase() {
         )
         runMultiStep(
             listOf(
-                "src/test/resources/sources/changeconstructor/1",
-                "src/test/resources/sources/changeconstructor/2",
-                "src/test/resources/sources/changeconstructor/3"
+                "src/test/resources/sources/change_constructor/1",
+                "src/test/resources/sources/change_constructor/2",
+                "src/test/resources/sources/change_constructor/3"
             ),
             listOf(baseline, afterChange, afterFix)
         )
