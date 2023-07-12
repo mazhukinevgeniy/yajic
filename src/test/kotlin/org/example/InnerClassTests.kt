@@ -35,4 +35,23 @@ class InnerClassTests : TestFlowBase() {
             listOf(baseline, afterChange)
         )
     }
+
+    @org.junit.jupiter.api.Test
+    fun testDeepAnonymousClassDependsOnChanged() {
+        val baseline = TestStageExpectation(
+            setOf("Unused.java", "IProvider.java", "Main.java", "Library.java", "ClassOwner.java"),
+            listOf("before change")
+        )
+        val afterChange = TestStageExpectation(
+            setOf("Unused.java", "Library.java", "ClassOwner.java"),
+            listOf("1234")
+        )
+        runMultiStep(
+            listOf(
+                "src/test/resources/sources/anonymous_class_affected_by_change/1",
+                "src/test/resources/sources/anonymous_class_affected_by_change/2"
+            ),
+            listOf(baseline, afterChange)
+        )
+    }
 }
