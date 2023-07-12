@@ -15,23 +15,28 @@ data class ClassSignatures(
 
 class ClassMetadataExtractor {
 
-    fun extractSignatures(classFile: String): ClassSignatures {
-        val classReader = ClassReader(FileInputStream(classFile))
+    fun extractSignatures(classFile: String, skipInnerClass: Boolean = false): ClassSignatures {
+        val reader = ClassReader(FileInputStream(classFile))
 
         // for locating compiled inner classes
         val directory = classFile.substringBeforeLast(File.separatorChar)
 
+        return getSignatures(reader, directory, skipInnerClass)
+    }
+
+    private fun getSignatures(classReader: ClassReader, directory: String, skipInnerClass: Boolean): ClassSignatures {
         val publishedApi = HashSet<String>()
         val usedApi = HashSet<String>()
 
-        classReader.accept(ExtractingClassVisitor(publishedApi, usedApi, directory), 0)
+        classReader.accept(ExtractingClassVisitor(publishedApi, usedApi, directory, skipInnerClass), 0)
         return ClassSignatures(publishedApi, usedApi)
     }
 
     private inner class ExtractingClassVisitor(
         val published: MutableSet<String>,
         val used: MutableSet<String>,
-        val directory: String
+        val directory: String,
+        val skipInnerClass: Boolean
     ) : ClassVisitor(Opcodes.ASM9) {
         private lateinit var currentClass: String
 
@@ -56,12 +61,14 @@ class ClassMetadataExtractor {
         }
 
         override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
-            val innerSignatures = extractSignatures("$directory${File.separator}$name.class")
+            if (!skipInnerClass) {
+                val innerSignatures = extractSignatures("$directory${File.separator}$name.class", skipInnerClass = true)
 
-            published.addAll(innerSignatures.published)
-            used.addAll(innerSignatures.used)
+                published.addAll(innerSignatures.published)
+                used.addAll(innerSignatures.used)
 
-            //this breaks the domain model a little bit, because "class" is most often used as "source file"
+                //this breaks the domain model a little bit, because "class" is most often used as "source file"
+            }
 
             super.visitInnerClass(name, outerName, innerName, access)
         }
