@@ -50,9 +50,8 @@ class IncrementalCompilationTool {
             results.errors.addAll(secondReport.errors)
         } else {
             analyzeNewClassFiles(secondStageNoPrefix, analyzer, storage, context)
+            analyzer.flushMetadataUpdates(storage)
         }
-
-        analyzer.flushMetadataUpdates(storage)
 
         return results
     }

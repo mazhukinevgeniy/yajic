@@ -48,7 +48,7 @@ class IsolatedChangeTest : TestFlowBase() {
             errors = listOf("constructor Library in class Library cannot be applied to given types")
         )
         val afterFix = TestStageExpectation(
-            setOf("Main.java"),
+            setOf("Main.java", "Library.java"),
             listOf("1111", "15")
         )
         runMultiStep(
