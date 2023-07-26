@@ -32,7 +32,7 @@ class AddedMethodsTests : TestFlowBase() {
             errors = listOf("Library is not abstract")
         )
         val afterFix = TestStageExpectation(
-            setOf("Library.java"),
+            setOf("ILibrary.java", "Library.java", "AbstractLibrary.java"),
             programOutput = listOf("done")
         )
         runMultiStep(
@@ -45,5 +45,26 @@ class AddedMethodsTests : TestFlowBase() {
         )
 
         //TODO: support case where indirect implementor of an interface should be rebuilt
+    }
+
+    @org.junit.jupiter.api.Test
+    fun detectUnfixedError() {
+        val baseline = TestStageExpectation(
+            setOf("Main.java", "ILibrary.java", "Library.java", "AbstractLibrary.java"),
+            listOf("before change")
+        )
+        val afterChange = TestStageExpectation(
+            setOf("ILibrary.java", "Library.java", "AbstractLibrary.java"),
+            programOutput = emptyList(),
+            errors = listOf("Library is not abstract")
+        )
+        runMultiStep(
+            listOf(
+                "src/test/resources/sources/add_method_to_interface/1",
+                "src/test/resources/sources/add_method_to_interface/2",
+                "src/test/resources/sources/add_method_to_interface/2"
+            ),
+            listOf(baseline, afterChange, afterChange)
+        )
     }
 }
